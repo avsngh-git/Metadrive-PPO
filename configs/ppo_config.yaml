@@ -1,0 +1,38 @@
+# Environment Configuration
+environment:
+  num_scenarios: 200
+  start_seed: 1000
+  use_render: False
+  image_observation: True
+  stack_size: 4
+  decision_repeat: 4
+
+  
+  # Parameters must be in vehicle_config -> sensors
+  sensors:
+    main_camera: [RGBCamera, 300, 300]
+    lidar:
+      num_lasers: 240
+      distance: 50
+vehicle_config:
+  image_source: 'main_camera'
+  
+  # LiDAR is enabled and configured by the presence of this block
+  lidar:
+    num_lasers: 240
+    distance: 50
+    
+  
+
+# Training Configuration
+training:
+  policy: "MultiInputPolicy"
+  total_timesteps: 500000
+  num_envs: 4
+  log_dir: "./ppo_metadrive_logs/"
+  model_save_path: "./models/ppo_metadrive_multi_modal.zip"
+
+# Evaluation Configuration
+evaluation:
+  model_load_path: "./models/ppo_metadrive_multi_modal.zip"
+  num_episodes: 10

@@ -1,0 +1,6 @@
+metadrive-simulator
+stable-baselines3[extra]
+torch
+pyyaml
+timm
+gymnasium
