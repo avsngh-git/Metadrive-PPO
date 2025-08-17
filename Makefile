@@ -14,7 +14,7 @@ setup:
 # Runs the training script
 train:
 	@echo "--> Starting training process..."
-	python train.py
+	xvfb-run -a python train.py
 
 # Runs the evaluation script
 evaluate:

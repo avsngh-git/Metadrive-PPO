@@ -1,38 +1,25 @@
 import os
 import yaml
-import copy # <--- IMPORT THE COPY MODULE
+import copy
+
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import SubprocVecEnv
+# --- MODIFICATION: Import both DummyVecEnv and the correct VecFrameStack ---
+from stable_baselines3.common.vec_env import DummyVecEnv, VecFrameStack
 from stable_baselines3.common.callbacks import CheckpointCallback
 
-from metadrive.component.sensors.rgb_camera import RGBCamera
-from metadrive.component.sensors.lidar import Lidar
-# Import our custom classes
 from src.environment import MetaDriveMultiModalEnv
 from src.model import CustomCombinedExtractor
 
-# train.py
-
-# In train.py, replace the existing make_env function
-
-# In train.py, replace the existing make_env function
-
 def make_env(rank, config, seed=0):
     """
-    Utility function for multiprocessed env.
+    Utility function for creating a single, non-stacked environment.
     """
     def _init():
-        # 1. Create a complete and clean configuration for the environment.
         env_config = copy.deepcopy(config['environment'])
         env_config['vehicle_config'] = copy.deepcopy(config['vehicle_config'])
-
-        # 2. THE CUSTOM SENSOR-PROCESSING LOOP HAS BEEN REMOVED.
-        #    It's no longer needed because the configuration is now standard.
-        
-        # 3. Set the unique seed for this environment process.
         env_config['start_seed'] = seed + rank
         
-        # 4. Initialize the environment with the standard, valid configuration.
+        # --- MODIFICATION: We no longer apply any wrappers here ---
         env = MetaDriveMultiModalEnv(env_config)
         return env
     return _init
@@ -42,15 +29,21 @@ def train():
     with open("configs/ppo_config.yaml", "r") as f:
         config = yaml.safe_load(f)
 
-    # Create directories for logs and models
+    # Create directories
     log_dir = config['training']['log_dir']
     model_save_path = config['training']['model_save_path']
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 
-    # Create the vectorized environment
+    # 1. Create the vectorized environment first
     num_envs = config['training']['num_envs']
-    vec_env = SubprocVecEnv([make_env(i, config) for i in range(num_envs)])
+    vec_env = DummyVecEnv([make_env(i, config) for i in range(num_envs)])
+
+    # --- MODIFICATION: Apply the VecFrameStack wrapper here ---
+    # This correctly handles frame stacking for vectorized environments
+    # and manages memory efficiently.
+    stack_size = config['environment'].get("stack_size", 1)
+    vec_env = VecFrameStack(vec_env, n_stack=stack_size)
 
     # Callback for saving models
     checkpoint_callback = CheckpointCallback(
@@ -59,7 +52,7 @@ def train():
         name_prefix="rl_model"
     )
 
-    # Define the policy keyword arguments, including our custom feature extractor
+    # Define the policy keyword arguments
     policy_kwargs = {
         "features_extractor_class": CustomCombinedExtractor,
         "features_extractor_kwargs": {"features_dim": 256},
