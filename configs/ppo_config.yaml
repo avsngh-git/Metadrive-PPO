@@ -9,7 +9,7 @@ environment:
 
   sensors:
     main_camera: [RGBCamera, 200, 200]
-    lidar: [Lidar, 240, 50]
+    lidar: [Lidar]
       
 
 vehicle_config:

@@ -11,10 +11,27 @@ class MetaDriveMultiModalEnv(gym.Wrapper):
     This is the final, simplified version that relies on the complete
     observation dictionary from the environment.
     """
+    # In src/environment.py
+
+import gymnasium as gym
+from gymnasium import spaces
+import numpy as np
+from metadrive.envs.metadrive_env import MetaDriveEnv
+
+# In src/environment.py
+# ... (imports and class definition)
+
+class MetaDriveMultiModalEnv(gym.Wrapper):
     def __init__(self, config):
+        # This is a small but important addition to make sure the vehicle_config is present
+        # Your train.py already does this, but it's good practice to have it here too.
+        if "vehicle_config" not in config:
+            config["vehicle_config"] = {}
+
         env = MetaDriveEnv(config)
         super(MetaDriveMultiModalEnv, self).__init__(env)
 
+        # ... (image_space definition is correct)
         image_space = spaces.Box(
             low=0, high=255,
             shape=(config["sensors"]["main_camera"][2], config["sensors"]["main_camera"][1], 3),
@@ -22,7 +39,12 @@ class MetaDriveMultiModalEnv(gym.Wrapper):
         )
         
         vehicle_state_dim = 5
-        lidar_dim = config["vehicle_config"]["lidar"]["num_lasers"]
+        
+        # --- START: CORRECTION ---
+        # Get the lidar dimension from the vehicle_config, not the sensor config.
+        # Use .get() to provide a default value if it's not specified.
+        lidar_dim = config["vehicle_config"].get("lidar", {}).get("num_lasers", 240)
+        # --- END: CORRECTION ---
         
         vector_space = spaces.Box(
             low=-1.0, high=1.0,
@@ -34,6 +56,8 @@ class MetaDriveMultiModalEnv(gym.Wrapper):
             "image": image_space,
             "vector": vector_space
         })
+
+    # ... (the rest of the file is correct)
 
     def step(self, action):
         """
