@@ -1,5 +1,6 @@
 # Environment Configuration
 environment:
+  num_agents: 1
   num_scenarios: 200
   start_seed: 1000
   use_render: False
@@ -8,14 +9,15 @@ environment:
   decision_repeat: 4
 
   sensors:
-    main_camera: [RGBCamera, 200, 200]
+    rgb_camera: [RGBCamera, 200, 200]
     lidar: [Lidar]
       
-
 vehicle_config:
- 
-  # This ensures the environment returns a complete observation dictionary.
-  image_source: main_camera
+  # --- START: CRITICAL FIX ---
+  # Use a standard lane index to avoid YAML parsing errors.
+  # This represents a valid lane in a default procedurally generated map.
+  spawn_lane_index: ["1S0", "1S1", 0]
+  # --- END: CRITICAL FIX ---
   lidar:
     num_lasers: 240
     distance: 50
