@@ -3,18 +3,15 @@ import yaml
 import copy
 
 from stable_baselines3 import PPO
-# --- MODIFICATION: Import both DummyVecEnv and the correct VecFrameStack ---
 from stable_baselines3.common.vec_env import DummyVecEnv, VecFrameStack
 from stable_baselines3.common.callbacks import CheckpointCallback
 
 from src.environment import MetaDriveMultiModalEnv
 from src.model import CustomCombinedExtractor
 
-# In train.py
-
+# Import the sensor classes directly
 from metadrive.component.sensors.rgb_camera import RGBCamera
 from metadrive.component.sensors.lidar import Lidar
-# ... other imports
 
 # A mapping from string names to the actual classes
 SENSOR_MAPPING = {
@@ -29,7 +26,6 @@ def make_env(rank, config, seed=0):
     def _init():
         env_config = copy.deepcopy(config['environment'])
         
-        # <<< --- START: ADD THIS BLOCK --- >>>
         # Process the sensors to replace strings with class objects
         for sensor_name, sensor_config in env_config["sensors"].items():
             sensor_class_str = sensor_config[0]
@@ -37,7 +33,6 @@ def make_env(rank, config, seed=0):
                 sensor_config[0] = SENSOR_MAPPING[sensor_class_str]
             else:
                 raise ValueError(f"Unknown sensor class: {sensor_class_str}")
-        # <<< --- END: ADD THIS BLOCK --- >>>
 
         env_config['vehicle_config'] = copy.deepcopy(config['vehicle_config'])
         env_config['start_seed'] = seed + rank
@@ -58,13 +53,11 @@ def train():
     os.makedirs(log_dir, exist_ok=True)
     os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
 
-    # 1. Create the vectorized environment first
+    # 1. Create the vectorized environment
     num_envs = config['training']['num_envs']
     vec_env = DummyVecEnv([make_env(i, config) for i in range(num_envs)])
 
-    # --- MODIFICATION: Apply the VecFrameStack wrapper here ---
-    # This correctly handles frame stacking for vectorized environments
-    # and manages memory efficiently.
+    # 2. Apply the VecFrameStack wrapper
     stack_size = config['environment'].get("stack_size", 1)
     vec_env = VecFrameStack(vec_env, n_stack=stack_size)
 
@@ -107,7 +100,3 @@ def train():
 
 if __name__ == '__main__':
     train()
-
-
-
-
