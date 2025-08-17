@@ -10,19 +10,42 @@ from stable_baselines3.common.callbacks import CheckpointCallback
 from src.environment import MetaDriveMultiModalEnv
 from src.model import CustomCombinedExtractor
 
+# In train.py
+
+from metadrive.component.sensors.rgb_camera import RGBCamera
+from metadrive.component.sensors.lidar import Lidar
+# ... other imports
+
+# A mapping from string names to the actual classes
+SENSOR_MAPPING = {
+    "RGBCamera": RGBCamera,
+    "Lidar": Lidar
+}
+
 def make_env(rank, config, seed=0):
     """
     Utility function for creating a single, non-stacked environment.
     """
     def _init():
         env_config = copy.deepcopy(config['environment'])
+        
+        # <<< --- START: ADD THIS BLOCK --- >>>
+        # Process the sensors to replace strings with class objects
+        for sensor_name, sensor_config in env_config["sensors"].items():
+            sensor_class_str = sensor_config[0]
+            if sensor_class_str in SENSOR_MAPPING:
+                sensor_config[0] = SENSOR_MAPPING[sensor_class_str]
+            else:
+                raise ValueError(f"Unknown sensor class: {sensor_class_str}")
+        # <<< --- END: ADD THIS BLOCK --- >>>
+
         env_config['vehicle_config'] = copy.deepcopy(config['vehicle_config'])
         env_config['start_seed'] = seed + rank
         
-        # --- MODIFICATION: We no longer apply any wrappers here ---
         env = MetaDriveMultiModalEnv(env_config)
         return env
     return _init
+
 
 def train():
     # Load configuration

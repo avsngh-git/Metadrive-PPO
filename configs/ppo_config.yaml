@@ -16,7 +16,9 @@ vehicle_config:
  
   # This ensures the environment returns a complete observation dictionary.
   image_source: main_camera
-  
+  lidar:
+    num_lasers: 240
+    distance: 50
     
 # Training Configuration
 training:
