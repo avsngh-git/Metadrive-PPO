@@ -6,7 +6,7 @@ This project trains a Proximal Policy Optimization (PPO) agent to drive in the M
 The project is structured to be scalable and reproducible, separating configuration, source code, and scripts.
 
 ## Project Structure
-metadrive_ppo/
+"metadrive_ppo/
 ├── configs/          # Hyperparameter configuration files
 ├── scripts/          # Executable scripts for training and evaluation
 ├── src/              # Source code for environment and model definitions
@@ -14,4 +14,4 @@ metadrive_ppo/
 ├── .gitignore
 ├── Makefile          # Convenience commands for running the project
 ├── README.md
-└── requirements.txt  # Project dependencies
+└── requirements.txt  # Project dependencies"
